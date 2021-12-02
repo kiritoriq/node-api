@@ -1,3 +1,5 @@
+require('dotenv').config();
+// console.log(require('crypto').randomBytes(64).toString('hex'))
 const express = require('express');
 const _ = require('lodash');
 const morgan = require('morgan');
@@ -9,56 +11,16 @@ const authRoutes = require('./routes/authRoutes');
 const app = express();
 
 // Server Listening
-app.listen(3000);
+app.listen(process.env.APP_PORT);
 
 // middleware
 app.use(express.urlencoded({ extended: true }));
-app.use(morgan('dev'));
+if(process.env.APP_ENV === 'local') {
+    app.use(morgan('tiny'));
+}
 
 // API Auth Routes
-app.use('/api/auth', authRoutes);
-
-// // Home Routes
-// app.post('/login', async (req, res) => {
-//     // console.log(req.body)
-//     const userLogin = {
-//         username: req.body.username,
-//         password: req.body.password
-//     };
-//     const user = await pool.query(`SELECT * FROM users WHERE username = '${userLogin.username}'`)
-//                 .then((response) => {
-//                     let data = response.rows[0];
-//                     let password = data.password;
-//                     password = password.replace(/^\$2y(.+)$/i, '$2a$1');
-//                     let result = "";
-//                     bcrypt.compare(userLogin.password, password)
-//                         .then((resp) => {
-//                             if(resp == true) {
-//                                 res.json({
-//                                     message: 'Success',
-//                                     data: data,
-//                                 });
-//                             } else {
-//                                 res.json({
-//                                     message: 'Failed, username and password mismatch!'
-//                                 });
-//                             }
-//                         })
-//                         .catch((err) => {
-//                             res.json({
-//                                 message: 'Error Failed',
-//                                 error: err
-//                             })
-//                         })
-//                     pool.end()
-//                 })
-//     // let randArr = [];
-//     // for(let i = 0; i < 5; i++) {
-//     //     randArr.push(_.random(0, 99));
-//     // }
-//     // res.setHeader('Content-Type', 'application/json');
-//     // res.end(JSON.stringify(randArr));
-// })
+app.use('/api', authRoutes);
 
 // 404 not found
 app.use((req, res) => {

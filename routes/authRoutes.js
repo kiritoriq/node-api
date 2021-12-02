@@ -1,57 +1,52 @@
 const express = require('express');
-const jwt = require('jsonwebtoken');
-const { findUserLogin } = require('../models/Users');
+const jwt = require('../utils/jwt');
+// const { findUserLogin, getUserById } = require('../models/Users');
+const authService = require('../services/authService');
 
 // Define express router to group
 const authRouter = express.Router();
 
-authRouter.post('/login', async (req, res) => {
-    // const userLogin = {
-    //     username: req.body.username,
-    //     password: req.body.password
-    // };
-    // Mock User
-    const userLogin = {
-        username: 'superadmin',
-        password: 'polke123'
-    };
-    
-    let userData = await findUserLogin(userLogin.username, userLogin.password)
-    if(userData !== undefined) {
-        // console.log(userData)
-        jwt.sign({userData}, 'secretkey', { expiresIn: '365 days'}, (err, token) => {
-            if(err) {
-                throw err
-            } else {
-                res.json({
-                    status: 'success',
-                    message: 'User Logged In',
-                    _token: 'Bearer ' + token,
-                    user: userData
-                })
-            }
-        })
+authRouter.post('/auth/login', async (req, res) => {
+    if(req.body.username && req.body.password) {
+        const userLogin = {
+            username: req.body.username,
+            password: req.body.password
+        };
+        // Mock User
+        // const userLogin = {
+        //     username: 'superadmin',
+        //     password: 'polke123'
+        // };
+
+        authService
+            .login(userLogin.username, userLogin.password)
+            .then(response => res.status(200).send(response))
+            .catch(err => {
+                console.log(err);
+                res.status(400).send(err.message)
+            })
     } else {
-        console.log('else conds')
+        console.error(req.body);
+		return res.status(400).send("Invalid Request");
     }
 });
 
-authRouter.post('/logout', verifyToken, (req, res) => {
+authRouter.post('/auth/logout', verifyToken, (req, res) => {
     //
 });
 
-authRouter.get('/user-profile', verifyToken, (req, res) => {
-    const user = jwt.verify(req.token, 'secretkey', (err, authData) => {
-        if(err) {
-            res.sendStatus(403)
-        } else {
-            res.json({
-                status: 'success',
-                message: 'Taking user profile data successfully',
-                data: authData
-            })
-        }
-    })
+authRouter.get('/auth/user-profile', verifyToken, async (req, res) => {
+    try {
+        const tokenInfo = await jwt.verifyToken(req.token);
+        const userData = await getUserById(tokenInfo.id);
+        res.json({
+            status: 'success',
+            message: 'Get User Profile successfully',
+            data: userData 
+        })
+    } catch (err) {
+        res.sendStatus(403)
+    }
 });
 
 // Verify Token Function

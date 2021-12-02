@@ -1,7 +1,7 @@
 const pool = require('../connection');
 const bcrypt = require('bcrypt');
 
-async function findUserLogin (username, password) {
+const findUserLogin = async(username, password) => {
     // console.log(username, password);
     const userData = await pool.query(`SELECT * FROM users WHERE username = '${username}'`)
     let data = userData.rows[0]
@@ -16,6 +16,16 @@ async function findUserLogin (username, password) {
     }
 }
 
+const getUserById = async(id) => {
+    try {
+        const user = await pool.query(`SELECT * FROM users WHERE id = ${id}`)
+        return user.rows[0]
+    } catch (err) {
+        return err
+    }
+}
+
 module.exports = {
     findUserLogin,
+    getUserById
 };
